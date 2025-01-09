@@ -55,8 +55,8 @@ def BanditModule(filename, reportlist):
 
 
 
-url = 'https://github.com/PyCQA/bandit'
-tree = 'main'
+url = argv[1]
+tree = argv[2]
 owner = url.split('/')[3]
 repo = url.split('/')[4]
 
