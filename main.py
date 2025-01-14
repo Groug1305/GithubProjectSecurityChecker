@@ -65,7 +65,7 @@ def BanditModule(filename, reportlist):
             'filename': filename,
             'code': rep['code'],
             'issue': rep['issue_text'],
-            'severity': rep['issue_severity'],
+            'severity': rep['issue_severity'].lower(),
             'confidence': rep['issue_confidence'].lower(),
             'link': rep['issue_cwe']['link']
         }
