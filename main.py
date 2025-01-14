@@ -27,14 +27,31 @@ def DirViewer(url, list, level):
 def FileChecker(url, reportlist):
     if url.split('/')[-1][-3:] == '.py':
         response = requests.get(url)
-        print(response.status_code)
 
         file = open('tmp.py', 'w', encoding="utf-8")
         file.write(response.text)
         file.close()
         filename = '/'.join(url.split('/')[8:])
 
+        LibChecker(response.text, filename, reportlist)
+        
         BanditModule(filename, reportlist)
+
+
+def LibChecker(text, filename, reportlist):
+    with open('libs.json', 'r') as file:
+        libsdata = json.loads(file.read())
+        for rep in libsdata:
+            if str(f"import {rep['lib']}") in text:
+                report = {
+                    'filename': filename,
+                    'code': f"Affected library: {rep['lib']} ",
+                    'issue': rep['issue'],
+                    'severity': rep['severity'],
+                    'confidence': "high",
+                    'link': f"\nIssue link: {rep['vulnlink']}\nPrevious vulnerabilities info: {rep['liblink']}"
+                }
+                reportlist.append(report)
 
 
 def BanditModule(filename, reportlist):
@@ -49,6 +66,7 @@ def BanditModule(filename, reportlist):
             'code': rep['code'],
             'issue': rep['issue_text'],
             'severity': rep['issue_severity'],
+            'confidence': rep['issue_confidence'].lower(),
             'link': rep['issue_cwe']['link']
         }
         reportlist.append(report)
@@ -78,12 +96,12 @@ for link in links:
 
 reportlist = []
 for rawlink in rawlinks:
-    print(rawlink)
     FileChecker(rawlink, reportlist)
 
 for report in reportlist:
     print(f'Issue in file: {report['filename']}')
     print(report['code'][:-1])
     print(f'Issue: {report['issue']}')
+    print(f'Severity: {report['severity']}')
     print(f'Severity: {report['severity']}')
     print(f'More info: {report['link']}\n')
