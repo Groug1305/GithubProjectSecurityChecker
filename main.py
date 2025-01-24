@@ -1,26 +1,27 @@
 import requests
 import json
-from subprocess import Popen, PIPE
+import sys
 from bs4 import BeautifulSoup
+
+import codechecker
 
 
 def DirViewer(url, list, level):
-    with open('logs.txt', 'a') as logs:
-        newurl = 'https://github.com' + url
-        response = requests.get(newurl)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        links = soup.select('a.Link--primary')
-        links = set(links)
-        level+=1
+    newurl = 'https://github.com' + url
+    response = requests.get(newurl)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.select('a.Link--primary')
+    links = set(links)
+    level+=1
 
-        for link in links:
-            word = link.attrs['href'].split('/')
-            if word[3] == 'tree':
-                DirViewer(link.attrs['href'], list, level)
-            else:
-                result = '/'.join(word[-(level):])
-                urlraw = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/refs/heads/' + tree + '/' + result
-                list.append(urlraw)
+    for link in links:
+        word = link.attrs['href'].split('/')
+        if word[3] == 'tree':
+            DirViewer(link.attrs['href'], list, level)
+        else:
+            result = '/'.join(word[-(level):])
+            urlraw = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/refs/heads/' + tree + '/' + result
+            list.append(urlraw)
     return list
 
 
@@ -28,14 +29,11 @@ def FileChecker(url, reportlist):
     if url.split('/')[-1][-3:] == '.py':
         response = requests.get(url)
 
-        file = open('tmp.py', 'w', encoding="utf-8")
-        file.write(response.text)
-        file.close()
         filename = '/'.join(url.split('/')[8:])
 
         LibChecker(response.text, filename, reportlist)
         
-        BanditModule(filename, reportlist)
+        CodeChecker(response.text, filename, reportlist)
 
 
 def LibChecker(text, filename, reportlist):
@@ -54,27 +52,25 @@ def LibChecker(text, filename, reportlist):
                 reportlist.append(report)
 
 
-def BanditModule(filename, reportlist):
-    p = Popen(['python', 'bandit/cli/main.py', '-f', 'json', 'tmp.py'], stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
-    stdout, _ = p.communicate()
+def CodeChecker(text, filename, reportlist):
+    
+    data = codechecker.parse(text)
 
-    data = json.loads(stdout)
-
-    for rep in data['results']:
+    for rep in data:
         report = {
             'filename': filename,
-            'code': rep['code'],
-            'issue': rep['issue_text'],
-            'severity': rep['issue_severity'].lower(),
-            'confidence': rep['issue_confidence'].lower(),
-            'link': rep['issue_cwe']['link']
+            'code': '',
+            'issue': rep['text'],
+            'severity': rep['severity'],
+            'confidence': rep['confidence'],
+            'link': rep['cwe']
         }
         reportlist.append(report)
 
 
 
-url = argv[1]
-tree = argv[2]
+url = sys.argv[1]
+tree = sys.argv[2]
 owner = url.split('/')[3]
 repo = url.split('/')[4]
 
