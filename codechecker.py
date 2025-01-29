@@ -5,6 +5,7 @@ from tests import *
 
 def reportsys(report):
     if report != None:
+        report["code"] = get_code(context["data"], context["linenum"])
         reportlist.append(report)
 
 
@@ -82,28 +83,33 @@ def visit(node):
         visit_Constant(node)
 
 
-def genvisit(dataparse, depth):
+def genvisit(dataparse, depth, line):
     for _, value in ast.iter_fields(dataparse):
         if isinstance(value, list):
             max_idx = len(value) - 1
             for idx, item in enumerate(value):
                 if isinstance(item, ast.AST):
+                    if depth == 0:
+                        context["linenum"] = line
+                        line += 1
                     item.parent = dataparse
-                    #print(f"Depth: {depth}, Item: {ast.dump(item)}")
                     
                     depth += 1
                     context["node"] = item
                     visit(item)
-                    genvisit(item, depth)
+                    genvisit(item, depth, line)
                     depth -= 1
 
         elif isinstance(value, ast.AST):
+            if depth == 0:
+                context["linenum"] = line
+                line += 1
             value.parent = dataparse
-            #print(f"Depth: {depth}, Value: {ast.dump(value)}")
+
             depth += 1
             context["node"] = value
             visit(value)
-            genvisit(value, depth)
+            genvisit(value, depth, line)
             depth -= 1
 
 
@@ -112,10 +118,12 @@ import_aliases = {}
 context = dict()
 reportlist = []
 
-
 def parse(data):
-    dataparse = ast.parse(data)
 
-    genvisit(dataparse, 0)
+    context['data'] = data
+
+    dataparse = ast.parse(data.text)
+
+    genvisit(dataparse, 0, 0)
 
     return reportlist
