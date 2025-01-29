@@ -10,22 +10,22 @@ def reportsys(report):
 
 
 def visit_Call(node):
-        context["call"] = node
-        qualname = get_call_name(node, import_aliases)
-        name = qualname.split(".")[-1]
+    context["call"] = node
+    qualname = get_call_name(node, import_aliases)
+    name = qualname.split(".")[-1]
 
-        context["qualname"] = qualname
-        context["name"] = name
+    context["qualname"] = qualname
+    context["name"] = name
 
-        reportsys(insecure_crypto.hashlibcheck(context))
+    reportsys(insecure_crypto.hashlibcheck(context))
 
-        reportsys(insecure_ssl.sslcheck(context))
+    reportsys(insecure_ssl.sslcheck(context))
 
-        reportsys(shell_injection.shellcheck(context))
+    reportsys(shell_injection.shellcheck(context))
 
-        reportsys(hardcoded_passwords.passwordcheck_call(context))
+    reportsys(hardcoded_passwords.passwordcheck_call(context))
 
-        reportsys(request_timeout.timeoutcheck(context))
+    reportsys(request_timeout.timeoutcheck(context))
         
 
 
@@ -38,18 +38,18 @@ def visit_Import(node):
 
 
 def visit_ImportFrom(node):
-        module = node.module
-        if module is None:
-            return visit_Import(node)
+    module = node.module
+    if module is None:
+        return visit_Import(node)
 
-        for nodename in node.names:
-            if nodename.asname:
-                import_aliases[nodename.asname] = module + "." + nodename.name
-            else:
-                import_aliases[nodename.name] = module + "." + nodename.name
-            imports.add(module + "." + nodename.name)
-            context["module"] = module
-            context["name"] = nodename.name
+    for nodename in node.names:
+        if nodename.asname:
+            import_aliases[nodename.asname] = module + "." + nodename.name
+        else:
+            import_aliases[nodename.name] = module + "." + nodename.name
+        imports.add(module + "." + nodename.name)
+        context["module"] = module
+        context["name"] = nodename.name
 
 
 def visit_Constant(node):
