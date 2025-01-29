@@ -164,3 +164,27 @@ def get_called_name(node):
         return func.attr if isinstance(func, ast.Attribute) else func.id
     except AttributeError:
         return ""
+
+
+def get_code(data, linenum):
+
+    count = 0
+    realcount = 0
+    code = ''
+
+    linelist = data.iter_lines(decode_unicode=True)
+
+    for line in linelist:
+        print(f"{count}\t{line}")
+        if realcount == (linenum - 1) and linenum > 0:
+            code += f"{count+1}\t{line}\n"
+        if realcount == linenum:
+            code += f"{count+1}\t{line}\n"
+        if realcount == (linenum + 1):
+            code += f"{count+1}\t{line}\n"
+
+        if line and line[0] != '#':
+            realcount += 1
+        count += 1
+
+    return code
