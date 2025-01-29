@@ -33,7 +33,7 @@ def FileChecker(url, reportlist):
 
         LibChecker(response.text, filename, reportlist)
         
-        CodeChecker(response.text, filename, reportlist)
+        CodeChecker(response, filename, reportlist)
 
 
 def LibChecker(text, filename, reportlist):
@@ -52,14 +52,14 @@ def LibChecker(text, filename, reportlist):
                 reportlist.append(report)
 
 
-def CodeChecker(text, filename, reportlist):
+def CodeChecker(response, filename, reportlist):
     
-    data = codechecker.parse(text)
+    data = codechecker.parse(response)
 
     for rep in data:
         report = {
             'filename': filename,
-            'code': '',
+            'code': rep['code'],
             'issue': rep['text'],
             'severity': rep['severity'],
             'confidence': rep['confidence'],
@@ -99,5 +99,5 @@ for report in reportlist:
     print(report['code'][:-1])
     print(f'Issue: {report['issue']}')
     print(f'Severity: {report['severity']}')
-    print(f'Severity: {report['severity']}')
+    print(f'Confidence: {report['confidence']}')
     print(f'More info: {report['link']}\n')
